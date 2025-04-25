@@ -1,12 +1,12 @@
 package lab02.sportdata.entities;
 
+import lab02.sportdata.dto.league.LeagueDTO;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.ArrayList;
-import java.util.List;
+
 
 @Getter
 @Setter
@@ -15,5 +15,12 @@ import java.util.List;
 public class League {
     private Long id;
     private String name;
-    private List<Team> teams = new ArrayList<>();
+
+    public LeagueDTO mapToDto(String name, int teamCount) {
+        return new LeagueDTO(name, teamCount);
+    }
+
+    public League(String name){
+
+    }
 }

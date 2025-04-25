@@ -2,72 +2,123 @@ package lab02.sportdata.dao;
 
 import lab02.sportdata.entities.League;
 import lab02.sportdata.entities.Team;
+import lab02.sportdata.exception.CloseConnectionException;
+import lab02.sportdata.exception.CreateEntityException;
 import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Repository
 public class LeagueDAOImpl implements LeagueDAO {
 
     private final DataSource dataSource;
+    private Connection connection;
+    private PreparedStatement preparedStatement;
+    private ResultSet resultSet;
 
     public LeagueDAOImpl(DataSource dataSource) {
         this.dataSource = dataSource;
     }
+
     @Override
     public List<League> getLeagues() {
-        String sql = "select l.id as league_id, l.name as league_name, " +
-                "t.id as team_id, t.name as team_name, t.league_id as team_league_id " +
-                "from league l left join team t on l.id = t.league_id";
-
+        String sql = "select * from league";
         List<League> leagues = new ArrayList<>();
-        Map<Long, League> leagueMap;
-        leagueMap = new HashMap<>();
-
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql);
-             ResultSet resultSet = preparedStatement.executeQuery()) {
-
-            while (resultSet.next()) {
-                Long leagueId = resultSet.getLong("league_id");
-                League league = leagueMap.get(leagueId);
-                if (league == null) {
-                    league = new League();
-                    league.setId(leagueId);
-                    league.setName(resultSet.getString("league_name"));
-                    league.setTeams(new ArrayList<>());
-                    leagueMap.put(leagueId, league);
-                    leagues.add(league);
-                }
-
-                Long teamId = resultSet.getLong("team_id");
-                if (teamId != 0) {
-                    Team team = new Team();
-                    team.setId(teamId);
-                    team.setName(resultSet.getString("team_name"));
-                    team.setLeagueId(resultSet.getLong("team_league_id"));
-                    league.getTeams().add(team);
-                }
-            }
-
+        try{
+            connection = dataSource.getConnection();
+            preparedStatement = connection.prepareStatement(sql);
+            resultSet = preparedStatement.executeQuery();
+           while (resultSet.next()) {
+               League league = new League();
+               league.setId(resultSet.getLong("id"));
+               league.setName(resultSet.getString("name"));
+               leagues.add(league);
+           }
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            e.getMessage();
+        }finally {
+            try{
+                connection.close();
+                preparedStatement.close();
+                resultSet.close();
+            } catch (SQLException e) {
+                e.getMessage();
+            }
         }
-
         return leagues;
     }
-
 
     @Override
     public League getLeague(Long id) {
         return null;
+    }
+
+    @Override
+    public void save(League league) throws CreateEntityException, CloseConnectionException {
+        String query = "insert into league(name) values(?)";
+        try{
+            connection = dataSource.getConnection();
+            preparedStatement = connection.prepareStatement(query);
+            preparedStatement.setString(1, league.getName());
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new CreateEntityException(e.getMessage());
+        }finally {
+            try {
+                connection.close();
+                preparedStatement.close();
+            } catch (SQLException e) {
+                throw new CloseConnectionException(e.getMessage());
+            }
+        }
+    }
+
+    @Override
+    public void update(League league) throws CreateEntityException, CloseConnectionException {
+        String query = "update league set name=? where id=?";
+        try{
+            connection = dataSource.getConnection();
+            preparedStatement = connection.prepareStatement(query);
+            preparedStatement.setString(1, league.getName());
+            preparedStatement.setLong(2, league.getId());
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new CreateEntityException(e.getMessage());
+        }finally {
+            try{
+                connection.close();
+                preparedStatement.close();
+            } catch (SQLException e) {
+                throw new CloseConnectionException(e.getMessage());
+            }
+        }
+    }
+
+    public int getTeamCount(League league) {
+        String sql = "select count(*) from team where league_id = ?";
+        int count = 0;
+        try{
+            connection = dataSource.getConnection();
+            preparedStatement = connection.prepareStatement(sql);
+            preparedStatement.setLong(1, league.getId());
+            resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                count = resultSet.getInt(1);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }finally {
+            try{
+                connection.close();
+                preparedStatement.close();
+                resultSet.close();
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return count;
     }
 }
