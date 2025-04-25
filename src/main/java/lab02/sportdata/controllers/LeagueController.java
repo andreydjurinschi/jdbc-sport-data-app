@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -23,10 +24,12 @@ public class LeagueController {
     }
 
     @GetMapping
-    public ResponseEntity<?> getLeagues() {
-        List<LeagueDTO> leagueDTO = leagueService.getLeagues();
-        if(leagueDTO.isEmpty()){
-            return ResponseEntity.status(HttpStatus.NO_CONTENT).body("No leagues found");
+    public ResponseEntity<?> getLeagues(){
+        List<LeagueDTO> leagueDTO;
+        try {
+            leagueDTO = leagueService.getLeagues();
+        } catch (CloseConnectionException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
         return ResponseEntity.status(HttpStatus.OK).body(leagueDTO);
     }

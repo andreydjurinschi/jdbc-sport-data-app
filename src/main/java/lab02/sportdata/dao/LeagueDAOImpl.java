@@ -4,6 +4,7 @@ import lab02.sportdata.entities.League;
 import lab02.sportdata.entities.Team;
 import lab02.sportdata.exception.CloseConnectionException;
 import lab02.sportdata.exception.CreateEntityException;
+import lab02.sportdata.exception.NotFoundException;
 import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
@@ -24,7 +25,7 @@ public class LeagueDAOImpl implements LeagueDAO {
     }
 
     @Override
-    public List<League> getLeagues() {
+    public List<League> getLeagues() throws CloseConnectionException {
         String sql = "select * from league";
         List<League> leagues = new ArrayList<>();
         try{
@@ -37,24 +38,48 @@ public class LeagueDAOImpl implements LeagueDAO {
                league.setName(resultSet.getString("name"));
                leagues.add(league);
            }
-        } catch (SQLException e) {
-            e.getMessage();
+        } catch (SQLException ignored) {
+
         }finally {
             try{
                 connection.close();
                 preparedStatement.close();
                 resultSet.close();
             } catch (SQLException e) {
-                e.getMessage();
+            throw new CloseConnectionException(e.getMessage());
             }
         }
         return leagues;
     }
 
-    @Override
-    public League getLeague(Long id) {
-        return null;
-    }
+    /*@Override
+    public League getLeague(Long id) throws NotFoundException {
+        List<Team> teams = new ArrayList<>();
+        String sql = "select t.id as team_id, t.name as team_name," +
+                "l.id as league_id, l.name as league_name " +
+                "from team t " +
+                "join league l on t.league_id = l.id ";
+
+        try{
+            connection = dataSource.getConnection();
+            preparedStatement = connection.prepareStatement(sql);
+            resultSet = preparedStatement.executeQuery();
+            while(resultSet.next()){
+                League league = new League();
+                league.setId(resultSet.getLong("league_id"));
+                league.setName(resultSet.getString("league_name"));
+
+                Team team = new Team();
+                team.setId(resultSet.getLong("team_id"));
+                team.setName(resultSet.getString("team_name"));
+                team.setLeague(league);
+                teams.add(team);
+            }
+        } catch (SQLException e) {
+            throw new NotFoundException(e.getMessage());
+        }
+        return teams;
+    }*/
 
     @Override
     public void save(League league) throws CreateEntityException, CloseConnectionException {

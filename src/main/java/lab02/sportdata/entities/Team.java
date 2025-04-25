@@ -12,5 +12,5 @@ import lombok.Setter;
 public class Team {
     private Long Id;
     private String Name;
-    private Long leagueId;
+    private League league;
 }

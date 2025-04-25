@@ -15,14 +15,13 @@ import java.util.List;
 @Service
 public class LeagueService {
 
-    @Autowired
     private final LeagueDAOImpl leagueDAO;
 
     public LeagueService(LeagueDAOImpl leagueDAO) {
         this.leagueDAO = leagueDAO;
     }
 
-    public List<LeagueDTO> getLeagues() {
+    public List<LeagueDTO> getLeagues() throws CloseConnectionException {
         List<League> leagues = leagueDAO.getLeagues();
         List<LeagueDTO> dtos = new ArrayList<>();
         for(League league : leagues) {
@@ -40,19 +39,5 @@ public class LeagueService {
         }
         leagueDAO.save(leagueCreateDTO.mapToEntity(leagueCreateDTO.getName()));
     }
-
-    public void updateLeague(LeagueCreateDTO leagueCreateDTO, Long id) throws CreateEntityException, CloseConnectionException {
-        if(leagueCreateDTO.getName().isEmpty()) {
-            throw new CreateEntityException("League name cannot be empty");
-        }
-        if(leagueCreateDTO.getName().length() > 10 || leagueCreateDTO.getName().length() < 3) {
-            throw new CreateEntityException("League name must be between 3 and 10 characters");
-        }
-        leagueDAO.update(leagueCreateDTO.mapToEntity(leagueCreateDTO.getName()));
-    }
-
-
-
-
 }
 
