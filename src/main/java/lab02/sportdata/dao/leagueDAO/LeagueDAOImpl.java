@@ -53,7 +53,30 @@ public class LeagueDAOImpl implements LeagueDAO {
 
     @Override
     public League getLeague(Long id) throws NotFoundException, CloseConnectionException {
-        return null;
+        String sql = "select * from league where id = ?";
+        League league = null;
+        try{
+            connection = dataSource.getConnection();
+            preparedStatement = connection.prepareStatement(sql);
+            preparedStatement.setLong(1, id);
+            resultSet = preparedStatement.executeQuery();
+            if (resultSet.next()) {
+                league = new League();
+                league.setId(resultSet.getLong("id"));
+                league.setName(resultSet.getString("name"));
+            }
+        } catch (SQLException e) {
+            throw new NotFoundException(e.getMessage());
+        }finally {
+            try{
+                connection.close();
+                preparedStatement.close();
+                resultSet.close();
+            } catch (SQLException e) {
+                throw new CloseConnectionException(e.getMessage());
+            }
+        }
+        return league;
     }
 
 

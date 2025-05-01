@@ -62,7 +62,23 @@ public class TeamDAOImpl implements TeamDAO {
 
     @Override
     public void createTeam(Team team) throws CloseConnectionException, CreateEntityException {
-
+        String query = "INSERT INTO team (name, league_id) VALUES (?, ?)";
+        try{
+            connection = dataSource.getConnection();
+            preparedStatement = connection.prepareStatement(query);
+            preparedStatement.setString(1, team.getName());
+            preparedStatement.setLong(2, team.getLeague().getId());
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new CreateEntityException(e.getMessage());
+        }finally {
+            try{
+                connection.close();
+                preparedStatement.close();
+            } catch (SQLException e) {
+                throw new CloseConnectionException(e.getMessage());
+            }
+        }
     }
 
     @Override
