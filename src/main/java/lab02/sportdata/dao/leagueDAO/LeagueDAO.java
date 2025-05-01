@@ -1,4 +1,4 @@
-package lab02.sportdata.dao;
+package lab02.sportdata.dao.leagueDAO;
 
 
 import lab02.sportdata.entities.League;
@@ -12,5 +12,5 @@ public interface LeagueDAO {
     List<League> getLeagues() throws CloseConnectionException;
     League getLeague(Long id) throws NotFoundException, CloseConnectionException;
     void save(League league) throws CreateEntityException, CloseConnectionException;
-    public void update(League league) throws CreateEntityException, CloseConnectionException;
+    void update(League league) throws CreateEntityException, CloseConnectionException;
 }

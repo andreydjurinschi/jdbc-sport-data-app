@@ -1,12 +1,11 @@
 package lab02.sportdata.services;
 
-import lab02.sportdata.dao.LeagueDAOImpl;
+import lab02.sportdata.dao.leagueDAO.LeagueDAOImpl;
 import lab02.sportdata.dto.league.LeagueCreateDTO;
 import lab02.sportdata.dto.league.LeagueDTO;
 import lab02.sportdata.entities.League;
 import lab02.sportdata.exception.CloseConnectionException;
 import lab02.sportdata.exception.CreateEntityException;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;

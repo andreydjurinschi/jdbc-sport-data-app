@@ -1,7 +1,6 @@
-package lab02.sportdata.dao;
+package lab02.sportdata.dao.leagueDAO;
 
 import lab02.sportdata.entities.League;
-import lab02.sportdata.entities.Team;
 import lab02.sportdata.exception.CloseConnectionException;
 import lab02.sportdata.exception.CreateEntityException;
 import lab02.sportdata.exception.NotFoundException;
@@ -46,11 +45,17 @@ public class LeagueDAOImpl implements LeagueDAO {
                 preparedStatement.close();
                 resultSet.close();
             } catch (SQLException e) {
-            throw new CloseConnectionException(e.getMessage());
+                throw new CloseConnectionException(e.getMessage());
             }
         }
         return leagues;
     }
+
+    @Override
+    public League getLeague(Long id) throws NotFoundException, CloseConnectionException {
+        return null;
+    }
+
 
     /*@Override
     public League getLeague(Long id) throws NotFoundException {
@@ -80,7 +85,6 @@ public class LeagueDAOImpl implements LeagueDAO {
         }
         return teams;
     }*/
-
     @Override
     public void save(League league) throws CreateEntityException, CloseConnectionException {
         String query = "insert into league(name) values(?)";
@@ -100,7 +104,6 @@ public class LeagueDAOImpl implements LeagueDAO {
             }
         }
     }
-
     @Override
     public void update(League league) throws CreateEntityException, CloseConnectionException {
         String query = "update league set name=? where id=?";
