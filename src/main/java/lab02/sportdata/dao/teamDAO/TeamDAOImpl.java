@@ -1,4 +1,5 @@
 package lab02.sportdata.dao.teamDAO;
+import lab02.sportdata.entities.Player;
 import lab02.sportdata.entities.Team;
 import lab02.sportdata.exception.CloseConnectionException;
 import lab02.sportdata.exception.CreateEntityException;
@@ -12,6 +13,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 @Repository
 public class TeamDAOImpl implements TeamDAO {
@@ -57,7 +59,43 @@ public class TeamDAOImpl implements TeamDAO {
 
     @Override
     public void getTeamById(Long id) throws CloseConnectionException, NotFoundException {
-
+        Team team = null;
+        String sqlTeam = "SELECT * FROM team WHERE id = ?";
+        String sqlPlayer = "SELECT * FROM player WHERE id = ?";
+        try{
+            connection = dataSource.getConnection();
+            preparedStatement = connection.prepareStatement(sqlTeam);
+            preparedStatement.setLong(1, id);
+            resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                team = new Team();
+                team.setId(resultSet.getLong("id"));
+                team.setName(resultSet.getString("name"));
+            }
+            if(team != null){
+                preparedStatement = connection.prepareStatement(sqlPlayer);
+                preparedStatement.setLong(1, id);
+                resultSet = preparedStatement.executeQuery();
+                List<Player> players = new ArrayList<>();
+                while (resultSet.next()) {
+                    Player player = new Player();
+                    player.setId(resultSet.getLong("id"));
+                    player.setName(resultSet.getString("name"));
+                    player.setTeam(team);
+                    players.add(player);
+                }
+            }
+        } catch (SQLException e) {
+            throw new NotFoundException(e.getMessage());
+        }finally {
+            try{
+                connection.close();
+                preparedStatement.close();
+                resultSet.close();
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     @Override

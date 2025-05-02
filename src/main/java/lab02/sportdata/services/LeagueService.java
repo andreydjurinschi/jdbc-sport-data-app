@@ -61,7 +61,8 @@ public class LeagueService {
         if(leagueCreateDTO.getName().length() > 10 || leagueCreateDTO.getName().length() < 3) {
             throw new CreateEntityException("League name must be between 3 and 10 characters");
         }
-        leagueDAO.update(id, leagueCreateDTO.mapToEntity(leagueCreateDTO.getName()));
+        league.setName(leagueCreateDTO.getName());
+        leagueDAO.update(id, league);
     }
 
     public void deleteLeague(Long id) throws NotFoundException, CloseConnectionException {

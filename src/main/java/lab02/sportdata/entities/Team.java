@@ -6,6 +6,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -14,6 +17,7 @@ public class Team {
     private Long Id;
     private String Name;
     private League league;
+    private List<Player> players = new ArrayList<>();
 
     public TeamBaseInfoDTO mapToDto() {
         return new TeamBaseInfoDTO(Id, Name);

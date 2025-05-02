@@ -9,5 +9,4 @@ import lombok.Setter;
 public class TeamBaseInfoDTO {
     private Long Id;
     private String name;
-
 }

@@ -73,7 +73,7 @@ public class LeagueController {
         } catch (CreateEntityException | CloseConnectionException | NotFoundException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
-        return ResponseEntity.status(HttpStatus.OK).body("League updated: \n" + getLeague(id));
+        return ResponseEntity.status(HttpStatus.OK).body("League updated");
     }
 
 

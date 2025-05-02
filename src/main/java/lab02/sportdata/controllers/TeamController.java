@@ -25,7 +25,7 @@ public class TeamController {
 /*        this.leagueService = leagueService;*/
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/league/{id}")
     public ResponseEntity<?> getTeams(@PathVariable Long id) {
         List<TeamBaseInfoDTO> teams;
         try{
