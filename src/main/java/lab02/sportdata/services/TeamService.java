@@ -27,7 +27,9 @@ public class TeamService {
 
     public List<TeamBaseInfoDTO> getTeamsByLeague(Long leagueId) throws CloseConnectionException, NotFoundException {
         List<TeamBaseInfoDTO> teams = new ArrayList<>();
-        List<Team> teamEntity = teamDAO.getTeamsByLeague(leagueId);
+        League league = leagueDAO.getLeague(leagueId);
+        if(league == null) {throw new NotFoundException("League not found");}
+        List<Team> teamEntity = teamDAO.getTeamsByLeague(league.getId());
         for(Team team : teamEntity) {
             teams.add(team.mapToDto());
         }
@@ -44,7 +46,7 @@ public class TeamService {
         if(teamCreateDTO.getTeamName().length() < 2 || teamCreateDTO.getTeamName().length() > 25) {
             throw new CreateEntityException("Team name must be between 2 and 25 characters");
         }
-        League league = null;
+        League league;
         try{
             league = leagueDAO.getLeague(teamCreateDTO.getLeagueId());
         } catch (NotFoundException e) {

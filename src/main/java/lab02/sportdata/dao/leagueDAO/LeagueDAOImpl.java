@@ -1,6 +1,7 @@
 package lab02.sportdata.dao.leagueDAO;
 
 import lab02.sportdata.entities.League;
+import lab02.sportdata.entities.Team;
 import lab02.sportdata.exception.CloseConnectionException;
 import lab02.sportdata.exception.CreateEntityException;
 import lab02.sportdata.exception.NotFoundException;
@@ -79,35 +80,51 @@ public class LeagueDAOImpl implements LeagueDAO {
         return league;
     }
 
-
-    /*@Override
-    public League getLeague(Long id) throws NotFoundException {
-        List<Team> teams = new ArrayList<>();
-        String sql = "select t.id as team_id, t.name as team_name," +
-                "l.id as league_id, l.name as league_name " +
-                "from team t " +
-                "join league l on t.league_id = l.id ";
+    @Override
+    public League getAllLeagueInfo(Long id) throws NotFoundException, CloseConnectionException {
+        League league = null;
+        String leagueSql = "select * from league where id = ?";
+        String teamSql = "select * from team where league_id = ?";
 
         try{
             connection = dataSource.getConnection();
-            preparedStatement = connection.prepareStatement(sql);
+            preparedStatement = connection.prepareStatement(leagueSql);
+            preparedStatement.setLong(1, id);
             resultSet = preparedStatement.executeQuery();
-            while(resultSet.next()){
-                League league = new League();
-                league.setId(resultSet.getLong("league_id"));
-                league.setName(resultSet.getString("league_name"));
-
-                Team team = new Team();
-                team.setId(resultSet.getLong("team_id"));
-                team.setName(resultSet.getString("team_name"));
-                team.setLeague(league);
-                teams.add(team);
+            if(resultSet.next()){
+                league = new League();
+                league.setId(resultSet.getLong("id"));
+                league.setName(resultSet.getString("name"));
+            }
+            if(league != null){
+                preparedStatement = connection.prepareStatement(teamSql);
+                preparedStatement.setLong(1, id);
+                resultSet = preparedStatement.executeQuery();
+                List<Team> leagueTeams = new ArrayList<>();
+                while (resultSet.next()) {
+                    Team team = new Team();
+                    team.setId(resultSet.getLong("id"));
+                    team.setName(resultSet.getString("name"));
+                    team.setLeague(league);
+                    leagueTeams.add(team);
+                }
+                league.setTeams(leagueTeams);
             }
         } catch (SQLException e) {
             throw new NotFoundException(e.getMessage());
         }
-        return teams;
-    }*/
+        finally {
+            try{
+                connection.close();
+                preparedStatement.close();
+                resultSet.close();
+            } catch (SQLException e) {
+                throw new CloseConnectionException(e.getMessage());
+            }
+        }
+        return league;
+    }
+
     @Override
     public void save(League league) throws CreateEntityException, CloseConnectionException {
         String query = "insert into league(name) values(?)";
@@ -127,19 +144,25 @@ public class LeagueDAOImpl implements LeagueDAO {
             }
         }
     }
+
     @Override
-    public void update(League league) throws CreateEntityException, CloseConnectionException {
-        String query = "update league set name=? where id=?";
+    public void delete(Long id) throws NotFoundException, CloseConnectionException {
+        String deleteLeague = "delete from league where id = ?";
+        String deleteTeam = "delete from team where league_id = ?";
         try{
             connection = dataSource.getConnection();
-            preparedStatement = connection.prepareStatement(query);
-            preparedStatement.setString(1, league.getName());
-            preparedStatement.setLong(2, league.getId());
+            preparedStatement = connection.prepareStatement(deleteTeam);
+            preparedStatement.setLong(1, id);
             preparedStatement.executeUpdate();
+
+            preparedStatement = connection.prepareStatement(deleteLeague);
+            preparedStatement.setLong(1, id);
+            preparedStatement.executeUpdate();
+
         } catch (SQLException e) {
-            throw new CreateEntityException(e.getMessage());
+            throw new NotFoundException(e.getMessage());
         }finally {
-            try{
+            try {
                 connection.close();
                 preparedStatement.close();
             } catch (SQLException e) {

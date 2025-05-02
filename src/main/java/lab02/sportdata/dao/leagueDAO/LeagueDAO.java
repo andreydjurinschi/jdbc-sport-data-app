@@ -11,6 +11,7 @@ import java.util.List;
 public interface LeagueDAO {
     List<League> getLeagues() throws CloseConnectionException;
     League getLeague(Long id) throws NotFoundException, CloseConnectionException;
+    League getAllLeagueInfo(Long id) throws NotFoundException, CloseConnectionException;
     void save(League league) throws CreateEntityException, CloseConnectionException;
-    void update(League league) throws CreateEntityException, CloseConnectionException;
+    void delete(Long id) throws NotFoundException, CloseConnectionException;
 }

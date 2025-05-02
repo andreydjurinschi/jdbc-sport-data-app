@@ -1,6 +1,5 @@
 package lab02.sportdata.dto.league;
 
-import lab02.sportdata.entities.Team;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -15,5 +14,5 @@ import java.util.List;
 @AllArgsConstructor
 public class LeagueFullInfoDto {
     private String name;
-    private List<Team> teamList = new ArrayList<>();
+    private List<String> teamList = new ArrayList<>();
 }
