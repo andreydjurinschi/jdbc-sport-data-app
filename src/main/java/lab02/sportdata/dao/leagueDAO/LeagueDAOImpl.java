@@ -171,6 +171,27 @@ public class LeagueDAOImpl implements LeagueDAO {
         }
     }
 
+    @Override
+    public void update(Long id, League leagueToUpdate) throws CloseConnectionException, NotFoundException {
+        String sql = "update league set name = ? where id = ?";
+        try{
+            connection = dataSource.getConnection();
+            preparedStatement = connection.prepareStatement(sql);
+            preparedStatement.setString(1, leagueToUpdate.getName());
+            preparedStatement.setLong(2, id);
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new NotFoundException(e.getMessage());
+        }finally {
+            try{
+                connection.close();
+                preparedStatement.close();
+            } catch (SQLException e) {
+                throw new CloseConnectionException(e.getMessage());
+            }
+        }
+    }
+
     public int getTeamCount(League league) {
         String sql = "select count(*) from team where league_id = ?";
         int count = 0;

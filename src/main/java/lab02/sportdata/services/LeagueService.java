@@ -50,6 +50,20 @@ public class LeagueService {
         leagueDAO.save(leagueCreateDTO.mapToEntity(leagueCreateDTO.getName()));
     }
 
+    public void updateLeague(Long id, LeagueCreateDTO leagueCreateDTO) throws NotFoundException, CreateEntityException, CloseConnectionException {
+        League league = leagueDAO.getLeague(id);
+        if(league == null) {
+            throw new NotFoundException("League not found");
+        }
+        if(leagueCreateDTO.getName().isEmpty()) {
+            throw new CreateEntityException("League name cannot be empty");
+        }
+        if(leagueCreateDTO.getName().length() > 10 || leagueCreateDTO.getName().length() < 3) {
+            throw new CreateEntityException("League name must be between 3 and 10 characters");
+        }
+        leagueDAO.update(id, leagueCreateDTO.mapToEntity(leagueCreateDTO.getName()));
+    }
+
     public void deleteLeague(Long id) throws NotFoundException, CloseConnectionException {
         League league = leagueDAO.getLeague(id);
         if(league == null) {

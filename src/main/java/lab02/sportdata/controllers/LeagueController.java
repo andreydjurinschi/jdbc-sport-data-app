@@ -66,5 +66,15 @@ public class LeagueController {
         return ResponseEntity.status(HttpStatus.OK).body("League deleted successfully");
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateLeague(@PathVariable Long id, @RequestBody LeagueCreateDTO leagueCreateDTO){
+        try{
+            leagueService.updateLeague(id, leagueCreateDTO);
+        } catch (CreateEntityException | CloseConnectionException | NotFoundException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+        return ResponseEntity.status(HttpStatus.OK).body("League updated: \n" + getLeague(id));
+    }
+
 
 }

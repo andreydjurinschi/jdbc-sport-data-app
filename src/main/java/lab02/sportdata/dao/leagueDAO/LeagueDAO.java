@@ -14,4 +14,5 @@ public interface LeagueDAO {
     League getAllLeagueInfo(Long id) throws NotFoundException, CloseConnectionException;
     void save(League league) throws CreateEntityException, CloseConnectionException;
     void delete(Long id) throws NotFoundException, CloseConnectionException;
+    void update(Long id, League league) throws CloseConnectionException, NotFoundException;
 }
