@@ -1,8 +1,18 @@
 package lab02.sportdata.dto.team;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import java.util.List;
 
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class TeamFullInfoDTO {
     public String Name;
+    public String leagueName;
     public List<String> players;
 }

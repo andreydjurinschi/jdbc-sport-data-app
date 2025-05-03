@@ -1,6 +1,7 @@
 package lab02.sportdata.entities;
 
 import lab02.sportdata.dto.team.TeamBaseInfoDTO;
+import lab02.sportdata.dto.team.TeamFullInfoDTO;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -21,5 +22,14 @@ public class Team {
 
     public TeamBaseInfoDTO mapToDto() {
         return new TeamBaseInfoDTO(Id, Name);
+    }
+
+    public TeamFullInfoDTO mapToFullInfoDTO() {
+        List<String> playerNames = new ArrayList<>();
+
+        for(Player player : players) {
+            playerNames.add(player.getName());
+        }
+        return new TeamFullInfoDTO(Name, league.getName(), playerNames);
     }
 }

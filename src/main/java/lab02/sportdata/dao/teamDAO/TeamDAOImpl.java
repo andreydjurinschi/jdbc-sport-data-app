@@ -1,4 +1,5 @@
 package lab02.sportdata.dao.teamDAO;
+import lab02.sportdata.entities.League;
 import lab02.sportdata.entities.Player;
 import lab02.sportdata.entities.Team;
 import lab02.sportdata.exception.CloseConnectionException;
@@ -13,7 +14,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Stack;
 
 @Repository
 public class TeamDAOImpl implements TeamDAO {
@@ -31,7 +31,7 @@ public class TeamDAOImpl implements TeamDAO {
     @Override
     public List<Team> getTeamsByLeague(Long id) throws CloseConnectionException, NotFoundException {
         String query = "SELECT * FROM team WHERE league_id = ?";
-        List<Team> teams = new ArrayList<Team>();
+        List<Team> teams = new ArrayList<>();
         try{
             connection = dataSource.getConnection();
             preparedStatement = connection.prepareStatement(query);
@@ -58,10 +58,13 @@ public class TeamDAOImpl implements TeamDAO {
     }
 
     @Override
-    public void getTeamById(Long id) throws CloseConnectionException, NotFoundException {
+    public Team getTeamById(Long id) throws CloseConnectionException, NotFoundException {
         Team team = null;
+        League league = null;
         String sqlTeam = "SELECT * FROM team WHERE id = ?";
-        String sqlPlayer = "SELECT * FROM player WHERE id = ?";
+        String sqlPlayer = "SELECT * FROM player WHERE team_id = ?";
+        String sqlLeague = "SELECT * FROM league WHERE id = ?";
+
         try{
             connection = dataSource.getConnection();
             preparedStatement = connection.prepareStatement(sqlTeam);
@@ -71,6 +74,18 @@ public class TeamDAOImpl implements TeamDAO {
                 team = new Team();
                 team.setId(resultSet.getLong("id"));
                 team.setName(resultSet.getString("name"));
+                Long leagueId = resultSet.getLong("league_id");
+                PreparedStatement psLeague = connection.prepareStatement(sqlLeague);
+                psLeague.setLong(1, leagueId);
+                ResultSet resLeague = psLeague.executeQuery();
+                while (resLeague.next()) {
+                    league = new League();
+                    league.setId(resLeague.getLong("id"));
+                    league.setName(resLeague.getString("name"));
+                }
+                team.setLeague(league);
+                psLeague.close();
+                resLeague.close();
             }
             if(team != null){
                 preparedStatement = connection.prepareStatement(sqlPlayer);
@@ -81,9 +96,9 @@ public class TeamDAOImpl implements TeamDAO {
                     Player player = new Player();
                     player.setId(resultSet.getLong("id"));
                     player.setName(resultSet.getString("name"));
-                    player.setTeam(team);
                     players.add(player);
                 }
+                team.setPlayers(players);
             }
         } catch (SQLException e) {
             throw new NotFoundException(e.getMessage());
@@ -93,9 +108,10 @@ public class TeamDAOImpl implements TeamDAO {
                 preparedStatement.close();
                 resultSet.close();
             } catch (SQLException e) {
-                throw new RuntimeException(e);
+                throw new CloseConnectionException(e.getMessage());
             }
         }
+        return team;
     }
 
     @Override
@@ -120,7 +136,53 @@ public class TeamDAOImpl implements TeamDAO {
     }
 
     @Override
-    public void updateTeam(Team team) throws CloseConnectionException, NotFoundException {
+    public void addPlayerToTeam(Long teamId, Long playerId) throws CloseConnectionException, NotFoundException {
+        String sql = "update player set team_id = ? where id = ?";
+        try{
+            connection = dataSource.getConnection();
+            preparedStatement = connection.prepareStatement(sql);
+            preparedStatement.setLong(1, teamId);
+            preparedStatement.setLong(2, playerId);
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new NotFoundException(e.getMessage());
+        }
+        finally{
+            try{
+                connection.close();
+                preparedStatement.close();
+            } catch (SQLException e) {
+                throw new CloseConnectionException(e.getMessage());
+            }
+        }
+    }
+
+    @Override
+    public void deleteTeam(Long id) throws CloseConnectionException, NotFoundException {
+        String deleteTeamQuery = "DELETE FROM team WHERE id = ?";
+        String playerToFreeAgent = "update player set team_id = null where team_id = ?";
+        try{
+            connection = dataSource.getConnection();
+            preparedStatement = connection.prepareStatement(playerToFreeAgent);
+            preparedStatement.setLong(1, id);
+            preparedStatement.executeUpdate();
+            preparedStatement = connection.prepareStatement(deleteTeamQuery);
+            preparedStatement.setLong(1, id);
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new NotFoundException(e.getMessage());
+        }
+        finally {
+            try{
+                connection.close();
+                preparedStatement.close();
+            } catch (SQLException e) {
+                throw new CloseConnectionException(e.getMessage());
+            }
+        }
+
+
+
 
     }
 }

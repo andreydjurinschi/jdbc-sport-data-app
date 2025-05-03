@@ -2,6 +2,8 @@ package lab02.sportdata.controllers;
 
 import lab02.sportdata.dto.team.TeamBaseInfoDTO;
 import lab02.sportdata.dto.team.TeamCreateDTO;
+import lab02.sportdata.dto.team.TeamFullInfoDTO;
+import lab02.sportdata.entities.Team;
 import lab02.sportdata.exception.CloseConnectionException;
 import lab02.sportdata.exception.CreateEntityException;
 import lab02.sportdata.exception.NotFoundException;
@@ -46,5 +48,38 @@ public class TeamController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
         return ResponseEntity.status(HttpStatus.CREATED).body("Team created successfully: " + teamCreateDTO.getTeamName());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getTeamById(@PathVariable Long id) throws NotFoundException {
+        TeamFullInfoDTO team;
+        try{
+            team = teamService.getTeamById(id);
+        } catch (CloseConnectionException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        } catch (NotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+        return ResponseEntity.status(HttpStatus.OK).body(team);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteTeam(@PathVariable Long id){
+        try{
+            teamService.deleteTeamById(id);
+        } catch (CloseConnectionException | NotFoundException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+        return ResponseEntity.status(HttpStatus.OK).body("Team deleted successfully");
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> addPlayerToTeam(@PathVariable Long id, Long playerId) throws CloseConnectionException, NotFoundException {
+        try{
+            teamService.addPlayerToTeam(id , playerId);
+        } catch (NotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+        return ResponseEntity.status(HttpStatus.OK).body("Player added successfully\n" + getTeamById(id));
     }
 }

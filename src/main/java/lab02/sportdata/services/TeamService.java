@@ -4,6 +4,7 @@ import lab02.sportdata.dao.leagueDAO.LeagueDAOImpl;
 import lab02.sportdata.dao.teamDAO.TeamDAOImpl;
 import lab02.sportdata.dto.team.TeamBaseInfoDTO;
 import lab02.sportdata.dto.team.TeamCreateDTO;
+import lab02.sportdata.dto.team.TeamFullInfoDTO;
 import lab02.sportdata.entities.League;
 import lab02.sportdata.entities.Team;
 import lab02.sportdata.exception.CloseConnectionException;
@@ -53,5 +54,23 @@ public class TeamService {
             throw new CreateEntityException("League not found");
         }
         teamDAO.createTeam(teamCreateDTO.mapToEntity(league));
+    }
+
+    public TeamFullInfoDTO getTeamById(Long id) throws NotFoundException, CloseConnectionException {
+        Team team = teamDAO.getTeamById(id);
+        if(team == null) {throw new NotFoundException("Team not found");}
+        return team.mapToFullInfoDTO();
+    }
+
+    public void addPlayerToTeam(Long teamId, Long playerId) throws CloseConnectionException, NotFoundException {
+        Team team = teamDAO.getTeamById(teamId);
+        if(team == null) {throw new NotFoundException("Team not found");}
+        teamDAO.addPlayerToTeam(teamId, playerId);
+    }
+
+    public void deleteTeamById(Long id) throws NotFoundException, CloseConnectionException {
+        Team team = teamDAO.getTeamById(id);
+        if(team == null) {throw new NotFoundException("Team not found");}
+        teamDAO.deleteTeam(id);
     }
 }
