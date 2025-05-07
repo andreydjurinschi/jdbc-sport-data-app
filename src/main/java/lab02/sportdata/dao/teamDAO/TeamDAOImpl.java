@@ -180,9 +180,5 @@ public class TeamDAOImpl implements TeamDAO {
                 throw new CloseConnectionException(e.getMessage());
             }
         }
-
-
-
-
     }
 }

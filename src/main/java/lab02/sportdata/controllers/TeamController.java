@@ -41,17 +41,17 @@ public class TeamController {
     }
 
     @PostMapping
-    public ResponseEntity<?> createTeam(@RequestBody TeamCreateDTO teamCreateDTO) throws CreateEntityException, CloseConnectionException {
+    public ResponseEntity<?> createTeam(@RequestBody TeamCreateDTO teamCreateDTO) {
         try{
             teamService.save(teamCreateDTO);
-        }catch (CreateEntityException | CloseConnectionException e ) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }catch (CreateEntityException |NotFoundException |CloseConnectionException e ) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
         return ResponseEntity.status(HttpStatus.CREATED).body("Team created successfully: " + teamCreateDTO.getTeamName());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getTeamById(@PathVariable Long id) throws NotFoundException {
+    public ResponseEntity<?> getTeamById(@PathVariable Long id) {
         TeamFullInfoDTO team;
         try{
             team = teamService.getTeamById(id);
@@ -74,7 +74,7 @@ public class TeamController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> addPlayerToTeam(@PathVariable Long id, Long playerId) throws CloseConnectionException, NotFoundException {
+    public ResponseEntity<?> addPlayerToTeam(@PathVariable Long id, Long playerId) throws CloseConnectionException {
         try{
             teamService.addPlayerToTeam(id , playerId);
         } catch (NotFoundException e) {

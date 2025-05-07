@@ -1,11 +1,13 @@
 package lab02.sportdata.services;
 
 import lab02.sportdata.dao.leagueDAO.LeagueDAOImpl;
+import lab02.sportdata.dao.playerDAO.PlayerDAOImpl;
 import lab02.sportdata.dao.teamDAO.TeamDAOImpl;
 import lab02.sportdata.dto.team.TeamBaseInfoDTO;
 import lab02.sportdata.dto.team.TeamCreateDTO;
 import lab02.sportdata.dto.team.TeamFullInfoDTO;
 import lab02.sportdata.entities.League;
+import lab02.sportdata.entities.Player;
 import lab02.sportdata.entities.Team;
 import lab02.sportdata.exception.CloseConnectionException;
 import lab02.sportdata.exception.CreateEntityException;
@@ -20,10 +22,12 @@ public class TeamService {
 
     private final TeamDAOImpl teamDAO;
     private final LeagueDAOImpl leagueDAO;
+    private final PlayerDAOImpl playerDAO;
 
-    public TeamService(TeamDAOImpl teamDAO, LeagueDAOImpl leagueDAO) {
+    public TeamService(TeamDAOImpl teamDAO, LeagueDAOImpl leagueDAO, PlayerDAOImpl playerDAO) {
         this.teamDAO = teamDAO;
         this.leagueDAO = leagueDAO;
+        this.playerDAO = playerDAO;
     }
 
     public List<TeamBaseInfoDTO> getTeamsByLeague(Long leagueId) throws CloseConnectionException, NotFoundException {
@@ -37,22 +41,22 @@ public class TeamService {
         return teams;
     }
 
-    public void save(TeamCreateDTO teamCreateDTO) throws CreateEntityException, CloseConnectionException {
-        if(teamCreateDTO.getLeagueId() == null) {
+    public void save(TeamCreateDTO teamCreateDTO) throws CreateEntityException, CloseConnectionException, NotFoundException {
+        if (teamCreateDTO.getLeagueId() == null) {
             throw new CreateEntityException("League must be set");
         }
-        if(teamCreateDTO.getTeamName().isEmpty()) {
+        if (teamCreateDTO.getTeamName().isEmpty()) {
             throw new CreateEntityException("Team name must be set");
         }
-        if(teamCreateDTO.getTeamName().length() < 2 || teamCreateDTO.getTeamName().length() > 25) {
+        if (teamCreateDTO.getTeamName().length() < 2 || teamCreateDTO.getTeamName().length() > 25) {
             throw new CreateEntityException("Team name must be between 2 and 25 characters");
         }
-        League league;
-        try{
-            league = leagueDAO.getLeague(teamCreateDTO.getLeagueId());
-        } catch (NotFoundException e) {
-            throw new CreateEntityException("League not found");
+
+        League league = leagueDAO.getLeague(teamCreateDTO.getLeagueId());
+        if (league == null) {
+            throw new NotFoundException("League not found");
         }
+
         teamDAO.createTeam(teamCreateDTO.mapToEntity(league));
     }
 
@@ -64,7 +68,9 @@ public class TeamService {
 
     public void addPlayerToTeam(Long teamId, Long playerId) throws CloseConnectionException, NotFoundException {
         Team team = teamDAO.getTeamById(teamId);
+        Player player = playerDAO.getById(playerId);
         if(team == null) {throw new NotFoundException("Team not found");}
+        if(player == null) {throw new NotFoundException("Player not found");}
         teamDAO.addPlayerToTeam(teamId, playerId);
     }
 
