@@ -1,223 +1,526 @@
 ## Djurinschi Andrei I2302 
-### Spring Boot Hibernate
+### Spring Boot JDBC
 
 ### Цель:
 
-Разработай Spring Boot приложение для управления библиотекой, где будут 3 контроллера, 3 сервиса и 5 взаимосвязанных сущностей. Приложение должно поддерживать CRUD-операции через REST API и использовать Hibernate для работы с базой данных.
-API должен работать с DTO а не с entity 
-Author:
-Один автор может написать много книг (One-to-Many).
-Publisher:
-Один издатель может издать много книг (One-to-Many).
-Book:
-Каждая книга принадлежит одному автору (Many-to-One).
-Каждая книга имеет одного издателя (Many-to-One).
-Каждая книга может принадлежать к нескольким категориям (Many-to-Many).
-Category:
-Одна категория может быть связана с несколькими книгами (Many-to-Many).
-Library:
-Библиотека содержит коллекцию книг в виде списка (ElementCollection).
+Использовать Spring JDBC вместо Hibernate и JPA.
+Обеспечить поддержку CRUD-операций через REST API, работая исключительно с DTO, а не с entity.
+Реализовать DTO-классы, включающие всю связанную информацию: при выполнении GET-запроса, например, к команде, в ответе должны быть все игроки, тренер, лига и матчи, связанные с этой командой.
+При создании основной сущности (POST) передавать так же ID уже существующих связанных сущностей. Новые связанные сущности не должны создаваться вложенно, а привязываться по ID. Например, при создании команды передавать ID тренера, ID лиги и список ID игроков.
+Использовать DTO, содержащие более одного поля — недопустимо создание DTO с одним единственным полем.
+Реализовать базовую валидацию
+Строковые поля — не пустые.
+Числовые значения — в допустимых пределах.
+При создании или обновлении сущности — проверять существование всех указанных связанных ID (например, нельзя привязать команду к несуществующему тренеру).
 
 ### Выполнение
 
-Hibernate — это фреймворк для Java, предназначенный для работы с базами данных. Он реализует подход ORM (Object-Relational Mapping) — отображение объектов на реляционные таблицы. Hibernate позволяет разработчику взаимодействовать с базой данных, используя обычные Java-классы, без необходимости вручную писать SQL-запросы.
-Зачем нужен Hibernate
-Упрощение доступа к данным
-Вместо SQL-запросов вы работаете с Java-объектами, а Hibernate автоматически преобразует их в SQL и обратно.
+JDBC (Java Database Connectivity) — это стандартный API Java для взаимодействия с реляционными базами данных. Он предоставляет низкоуровневые средства для подключения к БД, выполнения SQL-запросов и обработки результатов.
+Основные особенности JDBC:
+Прямое выполнение SQL
+Вы пишете SQL-запросы вручную: SELECT, INSERT, UPDATE, DELETE.
+Явное управление ресурсами
+Нужно самостоятельно открывать и закрывать соединения, Statement, ResultSet и т.д.
+Гибкость
+Вы полностью контролируете SQL — хорошо для оптимизации, плохо для удобства.
+Не автоматизирует маппинг
+Данные из таблицы нужно вручную преобразовывать в Java-объекты.
 
-Автоматическое управление связями
-Например, @OneToMany, @ManyToOne — Hibernate сам позаботится о JOIN-операциях и каскадных действиях.
+Классы для обработки исключений
 
-Кэширование данных
-Повышает производительность, уменьшая количество обращений к БД.
-
-Поддержка транзакций
-Интеграция с JTA, Spring, и другими менеджерами транзакций.
-
-Портируемость
-SQL-запросы Hibernate пишет сам, и они адаптированы под конкретную СУБД (MySQL, PostgreSQL, Oracle и т.д.).
-
-Миграции схем (через Hibernate tools или в связке с Liquibase/Flyway)
-Может автоматически создавать таблицы и изменять схему базы по аннотациям классов.
-
-
-Конфигурационный файл с информацией о соединении с БД, классами, описывающими структуру итаблиц в БД
-```xml
-<?xml version='1.0' encoding='UTF-8'?>
-<!DOCTYPE hibernate-configuration PUBLIC
-        "-//Hibernate/Hibernate Configuration DTD 5.3//EN"
-        "http://hibernate.org/dtd/hibernate-configuration-3.0.dtd">
-
-<hibernate-configuration>
-    <session-factory>
-        <property name="hibernate.connection.driver_class">org.postgresql.Driver</property>
-        <property name="hibernate.connection.url">jdbc:postgresql://localhost:5433/lab02</property>
-        <property name="hibernate.connection.username">root</property>
-        <property name="hibernate.connection.password">pass</property>
-        <property name="hibernate.hbm2ddl.auto">update</property>
-        <mapping class="lab02.libraryhibernate.entities.Author"/>
-        <mapping class="lab02.libraryhibernate.entities.Book"/>
-        <mapping class="lab02.libraryhibernate.entities.Publisher"/>
-        <mapping class="lab02.libraryhibernate.entities.Category"/>
-    </session-factory>
-</hibernate-configuration>
-```
-
-Класс, регистрирующий бин для управления сессиями на основе конфигурационного файла... 
+Исключение выбрасывается при неудачном закрытии соединения с БД
 ```java
-package lab02.libraryhibernate.config;
+package lab02.sportdata.exception;
 
-import org.hibernate.SessionFactory;
-import org.hibernate.cfg.Configuration;
-import org.springframework.context.annotation.Bean;
-
-@org.springframework.context.annotation.Configuration
-public class HibernateConfig {
-    @Bean
-    public SessionFactory createSessionFactory() {
-        return new Configuration().configure("hibernate.cfg.xml").buildSessionFactory();
+public class CloseConnectionException extends Exception{
+    public CloseConnectionException(String message) {
+        super(message);
     }
 }
 ```
 
-Пример использования сессий:
+Исключения выбрасывается при неудачном создании сущности
 
 ```java
+package lab02.sportdata.exception;
+
+public class CreateEntityException extends Exception {
+    public CreateEntityException(String message) {
+        super(message);
+    }
+}
+```
+
+Исключение выбрасывается при поиске несуществующего объекта
+
+```java
+package lab02.sportdata.exception;
+
+public class NotFoundException extends Exception {
+    public NotFoundException(String message)
+    {
+        super(message);
+    }
+}
+```
+
+Класс конфигуратор, содержащий в себе всю информацию о соединении с БД
+
+```java
+package lab02.sportdata.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
+
+import javax.sql.DataSource;
+
+@Configuration
+public class DataSourceConfig {
+    @Bean
+    public DataSource dataSource() {
+        DriverManagerDataSource dataSource = new DriverManagerDataSource();
+        dataSource.setDriverClassName("org.postgresql.Driver");
+        dataSource.setUrl("jdbc:postgresql://localhost:5433/sportDataDB");
+        dataSource.setUsername("user");
+        dataSource.setPassword("pass");
+        return dataSource;
+    }
+}
+```
+
+DAO интерфейс (работаем с сущностью TEAM)
+
+```java
+package lab02.sportdata.dao.teamDAO;
+
+import lab02.sportdata.entities.Team;
+import lab02.sportdata.exception.CloseConnectionException;
+import lab02.sportdata.exception.CreateEntityException;
+import lab02.sportdata.exception.NotFoundException;
+
+import java.util.List;
+
+public interface TeamDAO {
+    List<Team> getTeamsByLeague(Long id) throws CloseConnectionException, NotFoundException;
+    Team getTeamById(Long id) throws CloseConnectionException, NotFoundException;
+    void createTeam(Team team) throws CloseConnectionException, CreateEntityException;
+    void addPlayerToTeam(Long teamId, Long playerId) throws CloseConnectionException, NotFoundException;
+    void deleteTeam(Long id) throws CloseConnectionException, NotFoundException;
+}
+```
+
+Имплеминтирующий класс:
+
+```java
+package lab02.sportdata.dao.teamDAO;
+import lab02.sportdata.entities.League;
+import lab02.sportdata.entities.Player;
+import lab02.sportdata.entities.Team;
+import lab02.sportdata.exception.CloseConnectionException;
+import lab02.sportdata.exception.CreateEntityException;
+import lab02.sportdata.exception.NotFoundException;
+import org.springframework.stereotype.Repository;
+
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
 @Repository
-public class BookDao {
+public class TeamDAOImpl implements TeamDAO {
 
-    private final SessionFactory sessionFactory;
+    private final DataSource dataSource;
+    private Connection connection;
+    private PreparedStatement preparedStatement;
+    private ResultSet resultSet;
 
-    public BookDao(SessionFactory sessionFactory) {
-        this.sessionFactory = sessionFactory;
+    public TeamDAOImpl(DataSource dataSource) {
+        this.dataSource = dataSource;
     }
 
-    public List<Book> getAllBooks() {
-        try(Session session = sessionFactory.openSession()) {
-            String query = "select b from Book b left join fetch b.categories";
-            return session.createQuery(query, Book.class).getResultList();
+
+    @Override
+    public List<Team> getTeamsByLeague(Long id) throws CloseConnectionException, NotFoundException {
+        String query = "SELECT * FROM team WHERE league_id = ?";
+        List<Team> teams = new ArrayList<>();
+        try{
+            connection = dataSource.getConnection();
+            preparedStatement = connection.prepareStatement(query);
+            preparedStatement.setLong(1, id);
+            resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                Team team = new Team();
+                team.setId(resultSet.getLong("id"));
+                team.setName(resultSet.getString("name"));
+                teams.add(team);
+            }
+        } catch (SQLException e) {
+            throw new NotFoundException("League not found");
+        } finally {
+            try{
+                connection.close();
+                preparedStatement.close();
+                resultSet.close();
+            } catch (SQLException e) {
+                throw new CloseConnectionException(e.getMessage());
+            }
+        }
+        return teams;
+    }
+
+    @Override
+    public Team getTeamById(Long id) throws CloseConnectionException, NotFoundException {
+        Team team = null;
+        League league = null;
+        String sqlTeam = "SELECT * FROM team WHERE id = ?";
+        String sqlPlayer = "SELECT * FROM player WHERE team_id = ?";
+        String sqlLeague = "SELECT * FROM league WHERE id = ?";
+
+        try{
+            connection = dataSource.getConnection();
+            preparedStatement = connection.prepareStatement(sqlTeam);
+            preparedStatement.setLong(1, id);
+            resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                team = new Team();
+                team.setId(resultSet.getLong("id"));
+                team.setName(resultSet.getString("name"));
+                Long leagueId = resultSet.getLong("league_id");
+                PreparedStatement psLeague = connection.prepareStatement(sqlLeague);
+                psLeague.setLong(1, leagueId);
+                ResultSet resLeague = psLeague.executeQuery();
+                while (resLeague.next()) {
+                    league = new League();
+                    league.setId(resLeague.getLong("id"));
+                    league.setName(resLeague.getString("name"));
+                }
+                team.setLeague(league);
+                psLeague.close();
+                resLeague.close();
+            }
+            if(team != null){
+                preparedStatement = connection.prepareStatement(sqlPlayer);
+                preparedStatement.setLong(1, id);
+                resultSet = preparedStatement.executeQuery();
+                List<Player> players = new ArrayList<>();
+                while (resultSet.next()) {
+                    Player player = new Player();
+                    player.setId(resultSet.getLong("id"));
+                    player.setName(resultSet.getString("name"));
+                    players.add(player);
+                }
+                team.setPlayers(players);
+            }
+        } catch (SQLException e) {
+            throw new NotFoundException(e.getMessage());
+        }finally {
+            try{
+                connection.close();
+                preparedStatement.close();
+                resultSet.close();
+            } catch (SQLException e) {
+                throw new CloseConnectionException(e.getMessage());
+            }
+        }
+        return team;
+    }
+
+    @Override
+    public void createTeam(Team team) throws CloseConnectionException, CreateEntityException {
+        String query = "INSERT INTO team (name, league_id) VALUES (?, ?)";
+        try{
+            connection = dataSource.getConnection();
+            preparedStatement = connection.prepareStatement(query);
+            preparedStatement.setString(1, team.getName());
+            preparedStatement.setLong(2, team.getLeague().getId());
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new CreateEntityException(e.getMessage());
+        }finally {
+            try{
+                connection.close();
+                preparedStatement.close();
+            } catch (SQLException e) {
+                throw new CloseConnectionException(e.getMessage());
+            }
         }
     }
-// Остальные методы
-```
-В DAO классах с использованием блока try-with-resiurces я окрываю сессию с бд для получения информации о всех книгах, включая их категории, после чего сессия сама закрывается высвобождаю ресурсы
 
-Сервис класс книги
-
-```java
-@Service
-public class BookService {
-
-    private final BookDao bookDao;
-    private final AuthorDao authorDao;
-    private final CategoryDao categoryDao;
-    private final PublisherDao publisherDao;
-    private final BookMapper bookMapper;
-
-    public BookService(BookDao bookDao, AuthorDao authorDao, CategoryDao categoryDao, PublisherDao publisherDao, BookMapper bookMapper) {
-        this.bookDao = bookDao;
-        this.authorDao = authorDao;
-        this.categoryDao = categoryDao;
-        this.publisherDao = publisherDao;
-        this.bookMapper = bookMapper;
-    }
-
-    public List<BookDto> getAllBooks(){
-        List<Book> books = bookDao.getAllBooks();
-        List<BookDto> BookDtos = new ArrayList<>();
-        for (Book book : books){
-            BookDtos.add(bookMapper.mapToDto(book));
+    @Override
+    public void addPlayerToTeam(Long teamId, Long playerId) throws CloseConnectionException, NotFoundException {
+        String sql = "update player set team_id = ? where id = ?";
+        try{
+            connection = dataSource.getConnection();
+            preparedStatement = connection.prepareStatement(sql);
+            preparedStatement.setLong(1, teamId);
+            preparedStatement.setLong(2, playerId);
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new NotFoundException(e.getMessage());
         }
-        return BookDtos;
+        finally{
+            try{
+                connection.close();
+                preparedStatement.close();
+            } catch (SQLException e) {
+                throw new CloseConnectionException(e.getMessage());
+            }
+        }
     }
+
+    @Override
+    public void deleteTeam(Long id) throws CloseConnectionException, NotFoundException {
+        String deleteTeamQuery = "DELETE FROM team WHERE id = ?";
+        String playerToFreeAgent = "update player set team_id = null where team_id = ?";
+        try{
+            connection = dataSource.getConnection();
+            preparedStatement = connection.prepareStatement(playerToFreeAgent);
+            preparedStatement.setLong(1, id);
+            preparedStatement.executeUpdate();
+            preparedStatement = connection.prepareStatement(deleteTeamQuery);
+            preparedStatement.setLong(1, id);
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new NotFoundException(e.getMessage());
+        }
+        finally {
+            try{
+                connection.close();
+                preparedStatement.close();
+            } catch (SQLException e) {
+                throw new CloseConnectionException(e.getMessage());
+            }
+        }
+    }
+}
+
 ```
 
-Поля DAO помимо BOOKDAO я использую в дугих методах, здесь показан именно метод получения всех книг из бд
-
-класс маппер для киги:
+Сущность Team
 
 ```java
-package lab02.libraryhibernate.mappers;
+package lab02.sportdata.entities;
 
-import lab02.libraryhibernate.dao.AuthorDao;
-import lab02.libraryhibernate.dao.CategoryDao;
-import lab02.libraryhibernate.dao.PublisherDao;
-import lab02.libraryhibernate.dtos.BookDto;
-import lab02.libraryhibernate.entities.Book;
-import lab02.libraryhibernate.entities.Category;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import lab02.sportdata.dto.team.TeamBaseInfoDTO;
+import lab02.sportdata.dto.team.TeamFullInfoDTO;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@NoArgsConstructor
+@AllArgsConstructor
+@Getter
+@Setter
+public class Team {
+    private Long Id;
+    private String Name;
+    private League league;
+    private List<Player> players = new ArrayList<>();
 
-@Component
-public class BookMapper {
-
-    @Autowired
-    private CategoryDao categoryDao;
-    @Autowired
-    private AuthorDao authorDao;
-
-    @Autowired
-    private PublisherDao publisherDao;
-
-    public BookDto mapToDto(Book book) {
-        return new BookDto(book.getId(), book.getTitle(), book.getAuthor().getId(), book.getPublisher().getId(), getIds(book));
+    public TeamBaseInfoDTO mapToDto() {
+        return new TeamBaseInfoDTO(Id, Name);
     }
 
-    public Book mapToEntity(BookDto dto) {
-        return new Book(dto.getTitle(), authorDao.getAuthor(dto.getAuthorId()), publisherDao.getPublisher(dto.getPublisherId()), getCategories(dto));
-    }
+    public TeamFullInfoDTO mapToFullInfoDTO() {
+        List<String> playerNames = new ArrayList<>();
 
-    private List<Long> getIds(Book book) {
-        List<Category> categories = book.getCategories();
-        List<Long> ids = new ArrayList<>();
-        for (Category category : categories) {
-            ids.add(category.getId());
+        for(Player player : players) {
+            playerNames.add(player.getName());
         }
-        return ids;
+        return new TeamFullInfoDTO(Name, league.getName(), playerNames);
+    }
+}
+```
+
+Сервис класс для команды (так же представлены DTO классы сущности TEAM)
+
+```java
+package lab02.sportdata.services;
+
+import lab02.sportdata.dao.leagueDAO.LeagueDAOImpl;
+import lab02.sportdata.dao.playerDAO.PlayerDAOImpl;
+import lab02.sportdata.dao.teamDAO.TeamDAOImpl;
+import lab02.sportdata.dto.team.TeamBaseInfoDTO;
+import lab02.sportdata.dto.team.TeamCreateDTO;
+import lab02.sportdata.dto.team.TeamFullInfoDTO;
+import lab02.sportdata.entities.League;
+import lab02.sportdata.entities.Player;
+import lab02.sportdata.entities.Team;
+import lab02.sportdata.exception.CloseConnectionException;
+import lab02.sportdata.exception.CreateEntityException;
+import lab02.sportdata.exception.NotFoundException;
+import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
+
+@Service
+public class TeamService {
+
+    private final TeamDAOImpl teamDAO;
+    private final LeagueDAOImpl leagueDAO;
+    private final PlayerDAOImpl playerDAO;
+
+    public TeamService(TeamDAOImpl teamDAO, LeagueDAOImpl leagueDAO, PlayerDAOImpl playerDAO) {
+        this.teamDAO = teamDAO;
+        this.leagueDAO = leagueDAO;
+        this.playerDAO = playerDAO;
     }
 
-    private List<Category> getCategories(BookDto dto) {
-        List<Long> ids = dto.getCategoryIds();
-        List<Category> categories = new ArrayList<>();
-        for(Long id : ids) {
-            categories.add(categoryDao.getCategory(id));
+    public List<TeamBaseInfoDTO> getTeamsByLeague(Long leagueId) throws CloseConnectionException, NotFoundException {
+        List<TeamBaseInfoDTO> teams = new ArrayList<>();
+        League league = leagueDAO.getLeague(leagueId);
+        if(league == null) {throw new NotFoundException("League not found");}
+        List<Team> teamEntity = teamDAO.getTeamsByLeague(league.getId());
+        for(Team team : teamEntity) {
+            teams.add(team.mapToDto());
         }
-        return categories;
+        return teams;
+    }
+
+    public void save(TeamCreateDTO teamCreateDTO) throws CreateEntityException, CloseConnectionException, NotFoundException {
+        if (teamCreateDTO.getLeagueId() == null) {
+            throw new CreateEntityException("League must be set");
+        }
+        if (teamCreateDTO.getTeamName().isEmpty()) {
+            throw new CreateEntityException("Team name must be set");
+        }
+        if (teamCreateDTO.getTeamName().length() < 2 || teamCreateDTO.getTeamName().length() > 25) {
+            throw new CreateEntityException("Team name must be between 2 and 25 characters");
+        }
+
+        League league = leagueDAO.getLeague(teamCreateDTO.getLeagueId());
+        if (league == null) {
+            throw new NotFoundException("League not found");
+        }
+
+        teamDAO.createTeam(teamCreateDTO.mapToEntity(league));
+    }
+
+    public TeamFullInfoDTO getTeamById(Long id) throws NotFoundException, CloseConnectionException {
+        Team team = teamDAO.getTeamById(id);
+        if(team == null) {throw new NotFoundException("Team not found");}
+        return team.mapToFullInfoDTO();
+    }
+
+    public void addPlayerToTeam(Long teamId, Long playerId) throws CloseConnectionException, NotFoundException {
+        Team team = teamDAO.getTeamById(teamId);
+        Player player = playerDAO.getById(playerId);
+        if(team == null) {throw new NotFoundException("Team not found");}
+        if(player == null) {throw new NotFoundException("Player not found");}
+        teamDAO.addPlayerToTeam(teamId, playerId);
+    }
+
+    public void deleteTeamById(Long id) throws NotFoundException, CloseConnectionException {
+        Team team = teamDAO.getTeamById(id);
+        if(team == null) {throw new NotFoundException("Team not found");}
+        teamDAO.deleteTeam(id);
     }
 }
 
 ```
 
-Контроллер
+Сообщения от исключений я использую в качестве вывода результата в контроллере:
+
 ```java
+package lab02.sportdata.controllers;
+
+import lab02.sportdata.dto.team.TeamBaseInfoDTO;
+import lab02.sportdata.dto.team.TeamCreateDTO;
+import lab02.sportdata.dto.team.TeamFullInfoDTO;
+import lab02.sportdata.exception.CloseConnectionException;
+import lab02.sportdata.exception.CreateEntityException;
+import lab02.sportdata.exception.NotFoundException;
+import lab02.sportdata.services.TeamService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
 @RestController
-@RequestMapping("/books")
-public class BookController {
+@RequestMapping("/teams")
+public class TeamController {
 
-    @Autowired
-    private final BookService bookService;
+    private final TeamService teamService;
+    /*private final LeagueService leagueService;*/
 
-    public BookController(BookService bookService)
-    {
-        this.bookService = bookService;
+    public TeamController(TeamService teamService/*, LeagueService leagueService*/) {
+        this.teamService = teamService;
+/*        this.leagueService = leagueService;*/
     }
 
-    @GetMapping
-    public List<BookDto> getAllBooks() {
-        return bookService.getAllBooks();
+    @GetMapping("/league/{id}")
+    public ResponseEntity<?> getTeams(@PathVariable Long id) {
+        List<TeamBaseInfoDTO> teams;
+        try{
+            teams = teamService.getTeamsByLeague(id);
+        } catch (CloseConnectionException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        } catch (NotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+        return ResponseEntity.status(HttpStatus.OK).body(teams);
     }
-// другие методы контроллера
+
+    @PostMapping
+    public ResponseEntity<?> createTeam(@RequestBody TeamCreateDTO teamCreateDTO) {
+        try{
+            teamService.save(teamCreateDTO);
+        }catch (CreateEntityException |NotFoundException |CloseConnectionException e ) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+        return ResponseEntity.status(HttpStatus.CREATED).body("Team created successfully: " + teamCreateDTO.getTeamName());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getTeamById(@PathVariable Long id) {
+        TeamFullInfoDTO team;
+        try{
+            team = teamService.getTeamById(id);
+        } catch (CloseConnectionException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        } catch (NotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+        return ResponseEntity.status(HttpStatus.OK).body(team);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteTeam(@PathVariable Long id){
+        try{
+            teamService.deleteTeamById(id);
+        } catch (CloseConnectionException | NotFoundException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+        return ResponseEntity.status(HttpStatus.OK).body("Team deleted successfully");
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> addPlayerToTeam(@PathVariable Long id, Long playerId) throws CloseConnectionException {
+        try{
+            teamService.addPlayerToTeam(id , playerId);
+        } catch (NotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+        return ResponseEntity.status(HttpStatus.OK).body("Player added successfully\n" + getTeamById(id));
+    }
+}
 ```
-
-Для тестов я испольщую сваггер, очень удобную для меня технологию. Выше представлен метод по получению всех книг из БД, возвращающий информацию о них в виде JSON-a
 
 ### Выводы
 
-Hibernate — это мощный инструмент для Java-разработчиков, который автоматизирует работу с базами данных, избавляя от необходимости вручную писать SQL-запросы. Он упрощает разработку, улучшает читаемость кода, обеспечивает переносимость между СУБД и помогает реализовывать сложные связи между сущностями. Использование Hibernate особенно оправдано в крупных проектах, где требуется надёжное и масштабируемое управление данными.
+JDBC — это низкоуровневый инструмент, подходящий для простых задач или когда нужен полный контроль над SQL. В отличие от Hibernate, он не упрощает работу с объектами и связями между таблицами, но даёт точную и предсказуемую работу с БД.
+
+
 
 
 
